@@ -1,0 +1,31 @@
+[
+  {
+    "id": "SatAlpha-01",
+    "value_millions": 250,
+    "shielding": "Hardened",
+    "age": 2,
+    "premium": 55450.75
+  },
+  {
+    "id": "ComSat-B2",
+    "value_millions": 180,
+    "shielding": "Standard",
+    "age": 7,
+    "premium": 152330.20
+  },
+  {
+    "id": "Echo-1 (Legacy)",
+    "value_millions": 75,
+    "shielding": "Light/Legacy",
+    "age": 14,
+    "premium": 125100.00
+  },
+  {
+    "id": "BroadComm-7",
+    "value_millions": 320,
+    "shielding": "Standard",
+    "age": 4,
+    "premium": 280500.50
+  }
+]
+
