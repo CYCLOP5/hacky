@@ -9,7 +9,7 @@ def map_kp_to_anomaly_prob(kp_index: float) -> float:
 def get_noaa_forecast_from_txt(
     url: str = "https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt",
     timeout: int = 15,
-    debug: bool = True
+    debug: bool = False
 ) -> Optional[np.ndarray]:
     headers = {'User-Agent': 'python-requests/1.0 (+https://your.domain)'}
     try:
@@ -186,12 +186,9 @@ def test_parser_with_sample_text(sample_text: str):
     return None
 if __name__ == "__main__":
     SATELLITE_VALUE = 150_000_000.0
-    print("Fetching live Kp forecast from NOAA's text product...")
     kp_forecast = get_noaa_forecast_from_txt(debug=True)
     if kp_forecast is None:
         print("\n[ERROR] Parsing failed to extract Kp values from NOAA forecast.")
-        print("You can (1) run test_parser_with_sample_text() with a saved copy of the file,")
-        print("or (2) inspect the NOAA URL manually:", "https://services.swpc.noaa.gov/text/3-day-geomag-forecast.txt")
     else:
         print("\n[OK] Forecast acquired. Kp values (3-hourly for next 24h):")
         print(kp_forecast)
