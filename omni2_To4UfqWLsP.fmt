@@ -1,0 +1,19 @@
+  FORMAT OF THE SUBSETTED FILE
+    
+    ITEMS                      FORMAT   
+     
+ 1 YEAR                          I4        
+ 2 DOY                           I4        
+ 3 Hour                          I3        
+ 4 ID for IMF spacecraft         I3        
+ 5 ID for SW Plasma spacecraft   I3        
+ 6 Scalar B, nT                  F6.1      
+ 7 BX, nT (GSE, GSM)             F6.1      
+ 8 BY, nT (GSM)                  F6.1      
+ 9 BZ, nT (GSM)                  F6.1      
+10 SW Plasma Temperature, K      F9.0      
+11 SW Proton Density, N/cm^3     F6.1      
+12 SW Plasma Speed, km/s         F6.0      
+13 Flow pressure                 F6.2      
+14 Kp index                      I3        
+15 Dst-index, nT                 I6        
