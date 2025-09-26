@@ -4,7 +4,7 @@ from sklearn.preprocessing import MinMaxScaler
 import joblib
 
 
-data_file = 'omni_data.txt'
+data_file = '../data/omni_data.txt'
 
 def find_data_start(filename):
     with open(filename, 'r') as f:
@@ -17,8 +17,8 @@ skip_rows = find_data_start(data_file)
 print(f"Detected {skip_rows} header lines to skip.")
 
 COLUMN_NAMES = [
-    'Year', 'Day', 'Hour', 'ID_IMF', 'ID_SW_Plasma', 'B_Magnitude', 'Bx_GSE_GSM', 
-    'By_GSM', 'Bz_GSM', 'Proton_Temperature', 'Proton_Density', 'Flow_Speed', 
+    'Year', 'Day', 'Hour', 'ID_IMF', 'ID_SW_Plasma', 'B_Magnitude', 'Bx_GSE_GSM',
+    'By_GSM', 'Bz_GSM', 'Proton_Temperature', 'Proton_Density', 'Flow_Speed',
     'Flow_Pressure', 'Kp_Index_10', 'Dst_Index'
 ]
 
@@ -49,12 +49,15 @@ features_scaled = scaler.fit_transform(features)
 joblib.dump(scaler, 'feature_scaler.pkl')
 
 LOOKBACK_WINDOW = 24
+FORECAST_HORIZON = 24  
 X, y = [], []
 
-for i in range(len(features_scaled) - LOOKBACK_WINDOW):
+for i in range(len(features_scaled) - LOOKBACK_WINDOW - FORECAST_HORIZON):
     X.append(features_scaled[i:i + LOOKBACK_WINDOW])
-    y.append(target.iloc[i + LOOKBACK_WINDOW])
+    y.append(target.iloc[i + LOOKBACK_WINDOW : i + LOOKBACK_WINDOW + FORECAST_HORIZON])
 
 X, y = np.array(X), np.array(y)
+
+y = y.reshape(y.shape[0], y.shape[1])
 
 np.savez('processed_data.npz', X=X, y=y)
