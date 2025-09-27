@@ -22,7 +22,7 @@ class PricingTools(BaseTool):
         """
         The main execution method for the pricing tool. It uses an LLM to synthesize inputs and calculate a final premium.
         """
-        llm = LLM(model="gemini/gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY"))
+        llm = LLM(model="gemini/gemini-2.5-flash-lite", api_key=os.getenv("GEMINI_API_KEY2"))
 
         prompt = f"""
         You are a senior pricing actuary. Your final task is to calculate a 24-hour insurance premium for a new satellite policy.
