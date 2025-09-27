@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from data_tools import SpaceWeatherTools
 from risk_tools import RiskAssessmentTools
 from cro_tools import PortfolioRiskTool
-from pricing_tools import PricingTools
+from pricing_tool import PricingTools
 
 # --- Step 1: Load Environment Variables & Initialize LLM ---
 load_dotenv()

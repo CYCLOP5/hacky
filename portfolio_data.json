@@ -2,30 +2,109 @@
   {
     "id": "SatAlpha-01",
     "value_millions": 250,
-    "shielding": "Hardened",
     "age": 2,
+    "shielding": "Hardened",
+    "orbit_type": "GEO",
+    "primary_mission": "Communications",
     "premium": 55450.75
   },
   {
     "id": "ComSat-B2",
     "value_millions": 180,
-    "shielding": "Standard",
     "age": 7,
+    "shielding": "Standard",
+    "orbit_type": "MEO",
+    "primary_mission": "Communications",
     "premium": 152330.20
   },
   {
     "id": "Echo-1 (Legacy)",
     "value_millions": 75,
-    "shielding": "Light/Legacy",
     "age": 14,
+    "shielding": "Light/Legacy",
+    "orbit_type": "LEO",
+    "primary_mission": "Weather",
     "premium": 125100.00
   },
   {
     "id": "BroadComm-7",
     "value_millions": 320,
-    "shielding": "Standard",
     "age": 4,
+    "shielding": "Standard",
+    "orbit_type": "GEO",
+    "primary_mission": "Broadcasting",
     "premium": 280500.50
+  },
+  {
+    "id": "GeoStar-3",
+    "value_millions": 400,
+    "age": 1,
+    "shielding": "Hardened",
+    "orbit_type": "GEO",
+    "primary_mission": "Communications",
+    "premium": 80000.00
+  },
+  {
+    "id": "OrbView-4",
+    "value_millions": 150,
+    "age": 10,
+    "shielding": "Standard",
+    "orbit_type": "LEO",
+    "primary_mission": "Earth Observation",
+    "premium": 165000.00
+  },
+  {
+    "id": "Titan-1 (M-Spec)",
+    "value_millions": 800,
+    "age": 3,
+    "shielding": "Military Grade",
+    "orbit_type": "Special",
+    "primary_mission": "Surveillance",
+    "premium": 120000.00
+  },
+  {
+    "id": "NanoLink-Cluster",
+    "value_millions": 20,
+    "age": 1,
+    "shielding": "Standard",
+    "orbit_type": "LEO",
+    "primary_mission": "IoT/Data Relay",
+    "premium": 15000.00
+  },
+  {
+    "id": "Galaxy-15R",
+    "value_millions": 220,
+    "age": 6,
+    "shielding": "Standard",
+    "orbit_type": "GEO",
+    "primary_mission": "Broadcasting",
+    "premium": 176000.00
+  },
+  {
+    "id": "StarHopper-A1",
+    "value_millions": 90,
+    "age": 2,
+    "shielding": "Light/Legacy",
+    "orbit_type": "LEO",
+    "primary_mission": "Internet Constellation",
+    "premium": 135000.00
+  },
+  {
+    "id": "Odyssey-Probe",
+    "value_millions": 750,
+    "age": 1,
+    "shielding": "Hardened",
+    "orbit_type": "Interplanetary",
+    "primary_mission": "Scientific",
+    "premium": 337500.00
+  },
+  {
+    "id": "AsiaSat-4 (Extended)",
+    "value_millions": 50,
+    "age": 18,
+    "shielding": "Standard",
+    "orbit_type": "GEO",
+    "primary_mission": "Communications",
+    "premium": 125000.00
   }
 ]
-
