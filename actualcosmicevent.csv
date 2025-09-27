@@ -1,0 +1,6 @@
+date,satellite,event_description,max_kp,outcome,asset_value_millions,shielding,years_in_orbit
+2024-08-15,StarLink-2341,Geomagnetic storm caused satellite to lose altitude control,7.8,Partial Loss,150,Light/Legacy,2
+2023-11-01,Galaxy-15,Solar flare caused permanent damage to transponders,8.5,Total Loss,250,Standard,7
+2022-05-20,GPS-IIF-12,High-energy protons caused phantom commands,6.2,Temporary Outage,300,Hardened,5
+2021-07-09,Iridium-77,Coronal Mass Ejection caused widespread outages,9.1,Total Loss,75,Standard,10
+2020-03-03,NOAA-19,Solar radiation storm damaged solar panels,8.1,Partial Loss,400,Hardened,12

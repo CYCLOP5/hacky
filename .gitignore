@@ -277,18 +277,10 @@ build/Release
 .env.production.local
 
 # Machine Learning Models (if any)
-*.pkl
-*.joblib
-*.h5
-*.hdf5
-*.onnx
-*.pb
-models/
-checkpoints/
+
 
 # Data files (large datasets)
 data/
-*.csv
 *.json
 *.xml
 !portfolio_data.json
