@@ -1,19 +1,25 @@
-  FORMAT OF THE SUBSETTED FILE
-    
-    ITEMS                      FORMAT   
-     
- 1 YEAR                          I4        
- 2 DOY                           I4        
- 3 Hour                          I3        
- 4 ID for IMF spacecraft         I3        
- 5 ID for SW Plasma spacecraft   I3        
- 6 Scalar B, nT                  F6.1      
- 7 BX, nT (GSE, GSM)             F6.1      
- 8 BY, nT (GSM)                  F6.1      
- 9 BZ, nT (GSM)                  F6.1      
-10 SW Plasma Temperature, K      F9.0      
-11 SW Proton Density, N/cm^3     F6.1      
-12 SW Plasma Speed, km/s         F6.0      
-13 Flow pressure                 F6.2      
-14 Kp index                      I3        
-15 Dst-index, nT                 I6        
+
+
+### **FORMAT OF THE SUBSETTED FILE**
+
+| Item | Variable                        | Format | Definition                                                                                                                                      |
+| ---- | ------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | **YEAR**                        | I4     | Year of observation (e.g., 2025).                                                                                                               |
+| 2    | **DOY**                         | I4     | Day of Year (1–365/366). Useful for continuous time series without month/day ambiguity.                                                         |
+| 3    | **Hour**                        | I3     | Hour of the day (0–23, UT).                                                                                                                     |
+| 4    | **ID for IMF spacecraft**       | I3     | Spacecraft identifier for the **Interplanetary Magnetic Field (IMF)** data source (e.g., ACE, WIND, DSCOVR).                                    |
+| 5    | **ID for SW Plasma spacecraft** | I3     | Spacecraft identifier for the **Solar Wind (SW) plasma** data source.                                                                           |
+| 6    | **Scalar B, nT**                | F6.1   | Magnitude of the IMF vector (nanotesla, nT).                                                                                                    |
+| 7    | **BX, nT (GSE, GSM)**           | F6.1   | X-component of IMF, in GSE (Geocentric Solar Ecliptic) or GSM (Geocentric Solar Magnetospheric) coordinates.                                    |
+| 8    | **BY, nT (GSM)**                | F6.1   | Y-component of IMF in GSM coordinates.                                                                                                          |
+| 9    | **BZ, nT (GSM)**                | F6.1   | Z-component of IMF in GSM coordinates. **Key storm driver**: southward (negative) Bz enhances geomagnetic activity.                             |
+| 10   | **SW Plasma Temperature, K**    | F9.0   | Solar wind proton temperature (Kelvin). High values indicate hotter, more energetic plasma.                                                     |
+| 11   | **SW Proton Density, N/cm³**    | F6.1   | Proton number density in solar wind (particles per cubic cm).                                                                                   |
+| 12   | **SW Plasma Speed, km/s**       | F6.0   | Bulk speed of solar wind (km/s). Normal range ~300–800 km/s; high speeds often from coronal holes or CMEs.                                      |
+| 13   | **Flow pressure**               | F6.2   | Solar wind dynamic pressure (nPa), proportional to density × velocity². Influences magnetosphere compression.                                   |
+| 14   | **Kp index**                    | I3     | Global geomagnetic activity index (0–9, quasi-logarithmic). Kp ≥ 5 indicates a geomagnetic storm.                                               |
+| 15   | **Dst-index, nT**               | I6     | Disturbance storm-time index (nT). Measures the strength of Earth’s ring current; strongly negative values (≤ –100 nT) mark geomagnetic storms. |
+
+
+
+Do you want me to also prepare this in a **fixed-width table format** (like in NASA’s OMNI dataset docs) so it matches the exact dataset file layout?
