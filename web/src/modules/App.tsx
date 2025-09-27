@@ -345,7 +345,7 @@ export function App({ embedded = false }: { embedded?: boolean }) {
         </div>
 
         {/* Step 3: Results */}
-        {result && (
+        {(loading || result) && (
           <div className="card">
             <h3 style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 0 }}>
               <span style={{ 
@@ -375,24 +375,73 @@ export function App({ embedded = false }: { embedded?: boolean }) {
               <div style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: 8 }}>
                 24-Hour Premium Quote
               </div>
+              {/* Policy Status Indicator */}
+              {result?.pricing_result?.policy_status && (
+                <div style={{ 
+                  marginBottom: 12,
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  display: 'inline-block',
+                  background: result.pricing_result.policy_status === 'APPROVED' 
+                    ? '#22c55e20' 
+                    : result.pricing_result.policy_status === 'MODIFIED'
+                    ? '#f59e0b20'
+                    : '#dc262620',
+                  color: result.pricing_result.policy_status === 'APPROVED'
+                    ? '#22c55e'
+                    : result.pricing_result.policy_status === 'MODIFIED' 
+                    ? '#f59e0b'
+                    : '#dc2626',
+                  border: `1px solid ${result.pricing_result.policy_status === 'APPROVED'
+                    ? '#22c55e40'
+                    : result.pricing_result.policy_status === 'MODIFIED'
+                    ? '#f59e0b40' 
+                    : '#dc262640'}`
+                }}>
+                  {result.pricing_result.policy_status === 'APPROVED' && 'Policy Approved'}
+                  {result.pricing_result.policy_status === 'MODIFIED' && 'Modified Coverage'}
+                  {result.pricing_result.policy_status === 'REJECTED' && 'Policy Rejected'}
+                </div>
+              )}
+
               <div style={{ 
-                fontSize: '3rem', 
+                fontSize: '2.5rem', 
                 fontWeight: 800, 
-                background: 'linear-gradient(135deg, #0ea5e9 0%, #22c55e 100%)', 
+                background: result?.pricing_result?.policy_status === 'REJECTED' 
+                  ? 'linear-gradient(135deg, #dc2626 0%, #f59e0b 100%)'
+                  : 'linear-gradient(135deg, #0ea5e9 0%, #22c55e 100%)', 
                 WebkitBackgroundClip: 'text', 
                 WebkitTextFillColor: 'transparent', 
                 backgroundClip: 'text',
                 marginBottom: 8
               }}>
-                {result?.pricing_result?.final_premium_usd 
+                {loading && !result ? 'Processing...' :
+                  result?.pricing_result?.policy_status === 'REJECTED'
+                  ? 'N/A'
+                  : result?.pricing_result?.final_premium_usd 
                   ? `$${result.pricing_result.final_premium_usd.toLocaleString()}`
                   : 'Processing...'}
               </div>
-              {result?.pricing_result?.final_premium_usd && (
-                <div style={{ color: '#64748b', fontSize: '0.875rem' }}>
-                  {((result.pricing_result.final_premium_usd / (assetValue * 1000000)) * 100).toFixed(3)}% of asset value
-                </div>
-              )}
+
+              <div style={{ color: '#64748b', fontSize: '0.875rem', display: 'grid', gap: 4 }}>
+                {result?.pricing_result?.final_premium_usd && result?.pricing_result?.policy_status !== 'REJECTED' && (
+                  <div>
+                    {((result.pricing_result.final_premium_usd / (assetValue * 1000000)) * 100).toFixed(3)}% of asset value
+                  </div>
+                )}
+                {result?.pricing_result?.coverage_percentage && result.pricing_result.coverage_percentage < 100 && (
+                  <div style={{ color: '#f59e0b', fontWeight: 600 }}>
+                    {result.pricing_result.coverage_percentage}% coverage
+                  </div>
+                )}
+                 {result?.pricing_result?.rejection_reason && (
+                  <div style={{ color: '#dc2626', fontWeight: 600 }}>
+                    {result.pricing_result.rejection_reason}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Key Metrics */}
@@ -427,11 +476,128 @@ export function App({ embedded = false }: { embedded?: boolean }) {
                   <span style={{ fontWeight: 600, color: '#22c55e' }}>Portfolio Status</span>
                 </div>
                 <div style={{ fontSize: '1.125rem', fontWeight: 600, color: '#cbd5e1', wordBreak: 'break-word' }}>
-                  {result?.portfolio_assessment?.strategic_recommendation || 'Analyzing...'}
+                  {loading && !result ? 'Analyzing...' : result?.portfolio_assessment?.strategic_recommendation || 'Analyzing...'}
                 </div>
                 <div style={{ color: '#64748b', fontSize: '0.875rem' }}>Risk officer recommendation</div>
               </div>
             </div>
+
+            {/* Premium Breakdown */}
+            {result?.pricing_result?.base_premium_usd && result?.pricing_result?.policy_status !== 'REJECTED' && (
+              <div style={{ 
+                marginBottom: 24,
+                padding: 20, 
+                background: '#0f172a', 
+                borderRadius: 12, 
+                border: '1px solid #1e293b' 
+              }}>
+                <h4 style={{ marginTop: 0, color: '#94a3b8' }}>Premium Breakdown</h4>
+                <div style={{ display: 'grid', gap: 8, fontSize: '0.875rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#cbd5e1' }}>Base Premium:</span>
+                    <span style={{ fontWeight: 600, color: '#cbd5e1' }}>
+                      ${result.pricing_result.base_premium_usd.toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#cbd5e1' }}>Surcharge Applied:</span>
+                    <span style={{ fontWeight: 600, color: result.pricing_result.surcharge_applied > 0 ? '#f59e0b' : '#22c55e' }}>
+                      {result.pricing_result.surcharge_applied > 0 
+                        ? `+$${result.pricing_result.surcharge_applied.toLocaleString()}`
+                        : '$0'}
+                    </span>
+                  </div>
+                  <div style={{ borderTop: '1px solid #334155', margin: '8px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem' }}>
+                    <span style={{ color: '#0ea5e9' }}>Final Premium:</span>
+                    <span style={{ fontWeight: 700, color: '#0ea5e9' }}>
+                      ${result.pricing_result.final_premium_usd.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Alternative Options for Modified/Rejected Policies */}
+            {result?.pricing_result?.alternative_options && (
+              <div style={{ 
+                marginBottom: 24,
+                padding: 16, 
+                background: '#1e293b', 
+                borderRadius: 8, 
+                border: '1px solid #334155' 
+              }}>
+                <h4 style={{ marginTop: 0, color: '#f59e0b' }}>Alternative Coverage Options</h4>
+                {result.pricing_result.alternative_options.partial_coverage && (
+                  <div style={{ 
+                    background: '#1e293b', 
+                    padding: 16, 
+                    borderRadius: 8, 
+                    border: '1px solid #334155',
+                    marginBottom: 12
+                  }}>
+                    <h5 style={{ marginTop: 0, color: '#22c55e' }}>Partial Coverage Option</h5>
+                    <div style={{ display: 'grid', gap: 8, fontSize: '0.875rem' }}>
+                      <div style={{ color: '#cbd5e1' }}>
+                        <strong>Coverage Amount:</strong> ${(result.pricing_result.alternative_options.partial_coverage.coverage_amount / 1000000).toFixed(1)}M
+                      </div>
+                      <div style={{ color: '#cbd5e1' }}>
+                        <strong>Premium:</strong> ${result.pricing_result.alternative_options.partial_coverage.premium_usd.toLocaleString()}
+                      </div>
+                      <div style={{ color: '#cbd5e1' }}>
+                        <strong>Deductible:</strong> ${(result.pricing_result.alternative_options.partial_coverage.deductible / 1000000).toFixed(1)}M
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {result.pricing_result.alternative_options.recommendation && (
+                  <div style={{ 
+                    padding: 12, 
+                    background: '#dc262620', 
+                    border: '1px solid #dc2626', 
+                    borderRadius: 8, 
+                    color: '#fca5a5',
+                    fontSize: '0.875rem'
+                  }}>
+                    <strong>Recommendation:</strong> {result.pricing_result.alternative_options.recommendation}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Deductible Information */}
+            {result?.pricing_result?.deductible_usd && (
+              <div style={{ 
+                marginBottom: 24,
+                padding: 16, 
+                background: '#1e293b', 
+                borderRadius: 8, 
+                border: '1px solid #334155' 
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#94a3b8' }}>Policy Deductible:</span>
+                  <span style={{ fontWeight: 600, color: '#cbd5e1' }}>
+                    ${result.pricing_result.deductible_usd.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Risk Mitigation Advice */}
+            {result?.pricing_result?.risk_mitigation && (
+              <div style={{ 
+                marginBottom: 24,
+                padding: 20, 
+                background: '#0f172a', 
+                borderRadius: 12, 
+                border: '1px solid #1e293b' 
+              }}>
+                <h4 style={{ marginTop: 0, color: '#0ea5e9' }}>Risk Mitigation Advice</h4>
+                <p style={{ margin: 0, color: '#cbd5e1', lineHeight: 1.6 }}>
+                  {result.pricing_result.risk_mitigation}
+                </p>
+              </div>
+            )}
 
             {/* Technical Details Toggle */}
             <div style={{ marginTop: 24 }}>
@@ -461,6 +627,9 @@ export function App({ embedded = false }: { embedded?: boolean }) {
                   overflow: 'auto'
                 }}>
                   <h4 style={{ margin: '0 0 12px 0', color: '#94a3b8' }}>Detailed AI Analysis</h4>
+                  <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: 12 }}>
+                    This is the raw JSON output from the AI workflow, providing a complete picture of the data used in the analysis.
+                  </div>
                   <pre style={{ 
                     color: '#cbd5e1', 
                     fontSize: '0.75rem', 
@@ -477,7 +646,7 @@ export function App({ embedded = false }: { embedded?: boolean }) {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }

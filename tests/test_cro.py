@@ -10,7 +10,7 @@ from cro_tools import PortfolioRiskTool
 load_dotenv()
 
 llm = LLM(
-    model="gemini/gemini-2.0-flash",
+    model="gemini/gemini-2.5-flash",
     api_key=os.getenv("GEMINI_API_KEY")
 )
 

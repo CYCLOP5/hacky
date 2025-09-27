@@ -15,7 +15,7 @@ load_dotenv()
 
 # Initialize the LLM once and share it among all agents for efficiency
 llm = LLM(
-    model="gemini/gemini-1.5-flash-preview-0514",
+    model="gemini/gemini-2.5-flash",
     api_key=os.getenv("GEMINI_API_KEY")
 )
 
@@ -103,7 +103,7 @@ pricing_task = Task(
       "Calculate the final 24-hour insurance premium for the new asset. You have two critical inputs: "
       "1. The individual incident probability for the new asset (from the actuarial analyst). "
       "2. The strategic recommendation for the entire portfolio (from the CRO). "
-      "Synthesize these inputs. If the CRO's recommendation is anything other than 'Continue Writing New Policies', you MUST apply a surcharge to the final premium to account for the increased portfolio risk. "
+      "Synthesize these inputs. Apply surcharges based on the CRO's strategic recommendation: 'Apply Moderate Risk Surcharge' (75% surcharge), 'Apply High Risk Surcharge' (150% surcharge), 'Urgent Reinsurance Required' (200% surcharge), or 'Temporarily Halt New Policies' (400% surcharge). No surcharge for 'Continue Writing New Policies'. "
       "Then, execute the 'Insurance Premium Calculation Tool' using the new asset's details: "
       "incident_probability: [from risk_task], "
       "asset_value_millions: {asset_value_millions}, "

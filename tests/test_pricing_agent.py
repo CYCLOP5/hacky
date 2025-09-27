@@ -9,7 +9,7 @@ from pricing_tool import PricingTools
 load_dotenv()
 
 llm = LLM(
-    model="gemini/gemini-2.0-flash",
+    model="gemini/gemini-2.5-flash",
     api_key=os.getenv("GEMINI_API_KEY")
 )
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     mock_portfolio_risk_report = json.dumps({
       "total_exposure_millions": 825.0,
       "probable_maximum_loss_millions": 289.21,
-      "strategic_recommendation": "Urgent Reinsurance Required",
+      "strategic_recommendation": "Apply High Risk Surcharge",
       "reasoning": "The PML of $289.21M represents over 35% of our total portfolio exposure. This is a critical risk level."
     })
     

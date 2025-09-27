@@ -28,6 +28,15 @@ class NewPolicy(BaseModel):
     years_in_orbit: int
     adjustment_factor: float = 1.0
 
+class HistoricalPolicy(BaseModel):
+    asset_value_millions: float
+    shielding_level: str
+    years_in_orbit: int
+    adjustment_factor: float = 1.0
+    historical_kp: float
+    historical_event_name: str
+    historical_date: str
+
 
 def load_portfolio_from_file(filepath: str = "portfolio_data.json") -> list:
     try:
@@ -51,7 +60,7 @@ def safe_parse_json(value: Any) -> Optional[Dict[str, Any]]:
 def build_crew() -> Dict[str, Any]:
     """Create agents, tools, and tasks; return a dict with crew and task refs for introspection."""
     # Initialize one LLM shared by all agents
-    llm = LLM(model="gemini/gemini-2.0-flash", api_key=os.getenv("GEMINI_API_KEY"))
+    llm = LLM(model="gemini/gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY"))
 
     # Tools
     search_tool = SerperDevTool()
@@ -148,7 +157,7 @@ def build_crew() -> Dict[str, Any]:
             "Calculate the final 24-hour insurance premium for the new asset. You have two critical inputs: "
             "1. The individual incident probability for the new asset (from the actuarial analyst). "
             "2. The strategic recommendation for the entire portfolio (from the CRO). "
-            "Synthesize these inputs. If the CRO's recommendation is anything other than 'Continue Writing New Policies', you MUST apply a surcharge to the final premium to account for the increased portfolio risk. "
+            "Synthesize these inputs. Apply surcharges based on the CRO's strategic recommendation: 'Apply Moderate Risk Surcharge' (75% surcharge), 'Apply High Risk Surcharge' (150% surcharge), 'Urgent Reinsurance Required' (200% surcharge), or 'Temporarily Halt New Policies' (400% surcharge). No surcharge for 'Continue Writing New Policies'. "
             "Then, execute the 'Insurance Premium Calculation Tool' using the new asset's details: "
             "incident_probability: [from risk_task], "
             "asset_value_millions: {asset_value_millions}, "
@@ -667,7 +676,6 @@ def _compute_incident_probability(kp: float, shielding: str, years_in_orbit: int
             base *= 0.55
         elif "light" in s or "legacy" in s:
             base *= 1.35
-        # standard -> no change
         years = max(0, int(years_in_orbit))
         base *= (1.0 + 0.015 * years)
         return max(0.0, min(1.0, base))
@@ -762,7 +770,8 @@ def run_full_workflow(body: NewPolicy):
         pricing_result = safe_parse_json(raw) or {"raw": raw}
         # Extract final premium if present in raw text
         if isinstance(raw, str):
-            m = re.search(r"Final\s+Premium:\s*\$([\d,]+(?:\.\d{2})?)", raw, re.IGNORECASE)
+            # Look for "Final Quote" or "Final Premium"
+            m = re.search(r"Final\s+(?:Quote|Premium):\s*\$([\d,]+(?:\.\d{2})?)", raw, re.IGNORECASE)
             if m:
                 amt = m.group(1).replace(",", "")
                 try:
@@ -781,12 +790,16 @@ def run_full_workflow(body: NewPolicy):
             total_exposure = sum(float(item.get("value_millions", 0.0)) for item in portfolio)
             pml = sum(float(item.get("value_millions", 0.0)) * probability for item in portfolio)
             pct = (pml / total_exposure) * 100.0 if total_exposure > 0 else 0.0
-            if pct < 5.0:
+            if pct < 3.0:
                 rec = "Continue Writing New Policies"
-            elif pct <= 15.0:
-                rec = "Temporarily Halt New Policies"
-            else:
+            elif pct < 8.0:
+                rec = "Apply Moderate Risk Surcharge"
+            elif pct < 15.0:
+                rec = "Apply High Risk Surcharge"
+            elif pct < 25.0:
                 rec = "Urgent Reinsurance Required"
+            else:
+                rec = "Temporarily Halt New Policies"
             portfolio_assessment = {
                 "total_exposure_millions": round(total_exposure, 3),
                 "probable_maximum_loss_millions": round(pml, 3),
@@ -823,6 +836,47 @@ def run_full_workflow(body: NewPolicy):
                 "confidence": 0.7,
             }
 
+    # Apply business logic to pricing result if present
+    if pricing_result and portfolio_assessment:
+        asset_value_usd = body.asset_value_millions * 1_000_000
+        strategic_rec = portfolio_assessment.get("strategic_recommendation", "Continue Writing New Policies")
+        
+        # Check if we have a final premium to evaluate
+        final_premium = pricing_result.get("final_premium_usd")
+        if final_premium:
+            max_economical_premium = asset_value_usd * 0.15  # 15% cap
+            
+            if final_premium > max_economical_premium:
+                if final_premium > asset_value_usd * 0.50:  # > 50% of asset value
+                    pricing_result.update({
+                        "policy_status": "REJECTED",
+                        "rejection_reason": "Premium exceeds economic viability threshold",
+                        "alternative_options": {
+                            "partial_coverage": {
+                                "coverage_amount": asset_value_usd * 0.50,
+                                "premium_usd": round(max_economical_premium, 2),
+                                "deductible": asset_value_usd * 0.25
+                            },
+                            "recommendation": "Consider self-insurance or delayed launch during extreme space weather"
+                        }
+                    })
+                else:
+                    coverage_percentage = max_economical_premium / final_premium
+                    pricing_result.update({
+                        "policy_status": "MODIFIED",
+                        "final_premium_usd": round(max_economical_premium, 2),
+                        "coverage_percentage": round(coverage_percentage * 100, 1),
+                        "coverage_amount_usd": round(asset_value_usd * coverage_percentage, 2),
+                        "deductible_usd": round(asset_value_usd * 0.10, 2),
+                        "risk_mitigation": "Recommend postponing launch or upgrading shielding for full coverage"
+                    })
+            else:
+                pricing_result.update({
+                    "policy_status": "APPROVED",
+                    "coverage_percentage": 100.0,
+                    "coverage_amount_usd": asset_value_usd
+                })
+
     return {
         "inputs": inputs,
         "worst_case_kp": worst_case_kp,
@@ -831,6 +885,167 @@ def run_full_workflow(body: NewPolicy):
         "individual_risk": individual_risk,
         "portfolio_assessment": portfolio_assessment,
         "pricing_result": pricing_result,
+    }
+
+
+@app.post("/api/run-historical")
+def run_historical_workflow(body: HistoricalPolicy):
+    """Run the AI workflow using historical space weather data instead of current forecast."""
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+
+    portfolio = load_portfolio_from_file()
+    if not portfolio:
+        raise HTTPException(status_code=400, detail="Portfolio data is missing or empty.")
+
+    # Calculate risk directly using the historical Kp value
+    historical_kp = body.historical_kp
+    
+    # Calculate incident probability using the same logic as the risk assessment tool
+    incident_prob = _compute_incident_probability(
+        kp=historical_kp,
+        shielding=body.shielding_level,
+        years_in_orbit=body.years_in_orbit,
+    )
+
+    # Create individual risk assessment based on historical data
+    individual_risk = {
+        "risk_category": (
+            "Low" if incident_prob < 0.02 
+            else "Moderate" if incident_prob < 0.08 
+            else "High" if incident_prob < 0.15
+            else "Extreme"
+        ),
+        "reasoning": f"Risk assessment based on historical {body.historical_event_name} event with Kp {historical_kp}",
+        "incident_probability": round(incident_prob, 6),
+        "confidence": 0.9,
+        "historical_context": {
+            "event_name": body.historical_event_name,
+            "event_date": body.historical_date,
+            "actual_kp": historical_kp
+        }
+    }
+
+    if historical_kp >= 8.0:
+        strategic_recommendation = "Temporarily Halt New Policies"
+        portfolio_risk_level = "CRITICAL"
+    elif historical_kp >= 7.0:
+        strategic_recommendation = "Urgent Reinsurance Required"  
+        portfolio_risk_level = "HIGH"
+    elif historical_kp >= 6.0:
+        strategic_recommendation = "Increase Premium Surcharges"
+        portfolio_risk_level = "ELEVATED"
+    else:
+        strategic_recommendation = "Continue Writing New Policies"
+        portfolio_risk_level = "NORMAL"
+
+    portfolio_assessment = {
+        "total_exposure_millions": sum(item.get("value_millions", 0) for item in portfolio),
+        "strategic_recommendation": strategic_recommendation,
+        "portfolio_risk_level": portfolio_risk_level,
+        "rationale": f"Portfolio assessment based on historical extreme space weather conditions during {body.historical_event_name}",
+        "historical_scenario": True
+    }
+
+    # Calculate pricing with historical context
+    expected_loss = incident_prob * body.asset_value_millions * 1_000_000
+    base_premium = (expected_loss * 1.20) + 10000.0
+    
+    # Apply surcharges based on portfolio recommendation with business logic constraints
+    asset_value_usd = body.asset_value_millions * 1_000_000
+    
+    if strategic_recommendation == "Temporarily Halt New Policies":
+        calculated_premium = base_premium * 5.0   # 400% surcharge for catastrophic conditions
+    elif strategic_recommendation == "Urgent Reinsurance Required":
+        calculated_premium = base_premium * 3.0   # 200% surcharge for urgent reinsurance
+    elif strategic_recommendation == "Apply High Risk Surcharge":
+        calculated_premium = base_premium * 2.5   # 150% surcharge for high risk
+    elif strategic_recommendation == "Apply Moderate Risk Surcharge":
+        calculated_premium = base_premium * 1.75  # 75% surcharge for moderate risk
+    else:
+        calculated_premium = base_premium         # No surcharge for normal operations
+
+    # BUSINESS LOGIC: Cap premium at reasonable percentage of asset value
+    max_premium_percentage = 0.15  # 15% of asset value maximum
+    max_economical_premium = asset_value_usd * max_premium_percentage
+    
+    # Check if premium is economically viable
+    if calculated_premium > max_economical_premium:
+        # Offer alternative coverage options
+        if calculated_premium > asset_value_usd * 0.50:  # If premium > 50% of asset value
+            # Reject policy - uneconomical
+            pricing_result = {
+                "policy_status": "REJECTED",
+                "rejection_reason": "Premium exceeds economic viability threshold",
+                "calculated_premium_usd": round(calculated_premium, 2),
+                "asset_value_usd": asset_value_usd,
+                "alternative_options": {
+                    "partial_coverage": {
+                        "coverage_amount": asset_value_usd * 0.50,  # 50% partial coverage
+                        "premium_usd": round(max_economical_premium, 2),
+                        "deductible": asset_value_usd * 0.25  # 25% deductible
+                    },
+                    "recommendation": "Consider self-insurance or prepare for total loss during extreme space weather"
+                },
+                "reasoning": f"Calculated premium of ${calculated_premium:,.0f} exceeds 50% of asset value (${asset_value_usd:,.0f}). Economically unviable for full coverage.",
+                "historical_scenario": True
+            }
+        else:
+            # Offer capped premium with reduced coverage
+            coverage_percentage = max_economical_premium / calculated_premium
+            final_premium = max_economical_premium
+            
+            pricing_result = {
+                "policy_status": "MODIFIED",
+                "final_premium_usd": round(final_premium, 2),
+                "base_premium_usd": round(base_premium, 2),
+                "coverage_percentage": round(coverage_percentage * 100, 1),
+                "coverage_amount_usd": round(asset_value_usd * coverage_percentage, 2),
+                "surcharge_applied": round(final_premium - base_premium, 2),
+                "deductible_usd": round(asset_value_usd * 0.10, 2),  # 10% deductible
+                "reasoning": f"Premium capped at 15% of asset value for economic viability. Coverage reduced to {coverage_percentage*100:.1f}% with 10% deductible.",
+                "historical_scenario": True,
+                "risk_mitigation": "Recommend taking backup measures or upgrading shielding for full coverage"
+            }
+    else:
+        # Normal pricing - economically viable
+        final_premium = calculated_premium
+        pricing_result = {
+            "policy_status": "APPROVED",
+            "final_premium_usd": round(final_premium, 2),
+            "base_premium_usd": round(base_premium, 2),
+            "coverage_percentage": 100.0,
+            "coverage_amount_usd": asset_value_usd,
+            "surcharge_applied": round(final_premium - base_premium, 2),
+            "reasoning": f"Premium calculated for extreme historical conditions during {body.historical_event_name}. Surcharge applied due to {portfolio_risk_level.lower()} portfolio risk level.",
+            "historical_scenario": True
+        }
+
+    return {
+        "inputs": {
+            "asset_value_millions": body.asset_value_millions,
+            "shielding_level": body.shielding_level,
+            "years_in_orbit": body.years_in_orbit,
+            "adjustment_factor": body.adjustment_factor,
+            "historical_kp": historical_kp,
+            "historical_event_name": body.historical_event_name,
+        },
+        "worst_case_kp": historical_kp,
+        "kp_source": "historical-data", 
+        "kp_detail": {
+            "source": "historical-event",
+            "event": body.historical_event_name,
+            "date": body.historical_date
+        },
+        "individual_risk": individual_risk,
+        "portfolio_assessment": portfolio_assessment,
+        "pricing_result": pricing_result,
+        "historical_context": {
+            "event_name": body.historical_event_name,
+            "event_date": body.historical_date,
+            "actual_kp": historical_kp,
+            "scenario_type": "historical_extreme_event"
+        }
     }
 
 

@@ -25,7 +25,7 @@ class PortfolioRiskTool(BaseTool):
         The main execution method. It uses an LLM to reason through a complex,
         multi-step financial modeling task.
         """
-        llm = LLM(model="gemini/gemini-2.0-flash", api_key=os.getenv("GEMINI_API_KEY"))
+        llm = LLM(model="gemini/gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY"))
         
         portfolio_str = json.dumps(portfolio, indent=2)
 
@@ -51,9 +51,11 @@ class PortfolioRiskTool(BaseTool):
             - **Calculate individual expected loss:** `expected_loss = probability * satellite_value_millions`.
             - **Sum the losses:** The PML is the sum of all individual expected losses.
         4.  **Provide Strategic Recommendation:** Based on the calculated PML relative to the total exposure, provide a clear, actionable recommendation.
-            - If PML < 5% of total exposure: 'Continue Writing New Policies'.
-            - If 5% <= PML <= 15% of total exposure: 'Temporarily Halt New Policies'.
-            - If PML > 15% of total exposure: 'Urgent Reinsurance Required'.
+            - If PML < 3% of total exposure: 'Continue Writing New Policies'.
+            - If 3% <= PML < 8% of total exposure: 'Apply Moderate Risk Surcharge'.
+            - If 8% <= PML < 15% of total exposure: 'Apply High Risk Surcharge'.
+            - If 15% <= PML < 25% of total exposure: 'Urgent Reinsurance Required'.
+            - If PML >= 25% of total exposure: 'Temporarily Halt New Policies'.
 
         Your final answer MUST be ONLY a JSON object with keys: "total_exposure_millions", "probable_maximum_loss_millions", "strategic_recommendation", and "reasoning". In the 'reasoning' section, show your step-by-step calculations for the PML.
         """

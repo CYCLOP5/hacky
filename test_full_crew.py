@@ -15,7 +15,7 @@ load_dotenv()
 
 # Initialize the LLM once and share it among all agents for efficiency
 llm = LLM(
-    model="gemini/gemini-2.0-flash",
+    model="gemini/gemini-2.5-flash",
     api_key=os.getenv("GEMINI_API_KEY")
 )
 

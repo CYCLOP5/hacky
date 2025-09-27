@@ -13,7 +13,7 @@ load_dotenv()
 # This approach is cleaner and more integrated with the framework.
 # The model name should still include the 'gemini/' prefix.
 llm = LLM(
-    model="gemini/gemini-2.0-flash" ,
+    model="gemini/gemini-2.5-flash" ,
     api_key=os.getenv("GEMINI_API_KEY")
 )
 

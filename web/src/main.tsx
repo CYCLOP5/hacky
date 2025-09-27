@@ -6,6 +6,8 @@ import HomePage from './pages/Home'
 import WorkflowPage from './pages/Workflow'
 import ForecastPage from './pages/Forecast'
 import HistoryPage from './pages/History'
+import HistoricalEventsPage from './pages/HistoricalEvents'
+import BusinessLogicPage from './pages/BusinessLogic'
 import { HeroScene } from './components/HeroScene'
 import { NavBar } from './components/NavBar'
 
@@ -35,6 +37,8 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'forecast', element: <ForecastPage /> },
       { path: 'history', element: <HistoryPage /> },
+      { path: 'events', element: <HistoricalEventsPage /> },
+      { path: 'business-logic', element: <BusinessLogicPage /> },
       { path: 'workflow', element: <WorkflowPage /> },
     ]
   }

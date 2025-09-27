@@ -12,6 +12,19 @@ export async function runWorkflow(inputs: RunInputs) {
   return data
 }
 
+export type HistoricalRunInputs = RunInputs & {
+  historical_kp: number
+  historical_event_name: string
+  historical_date: string
+}
+
+export async function runHistoricalWorkflow(inputs: HistoricalRunInputs) {
+  const { data } = await axios.post('/api/run-historical', inputs, {
+    timeout: 120000 // 2 minutes timeout to prevent hanging
+  })
+  return data
+}
+
 export async function getPortfolio() {
   const { data } = await axios.get('/api/portfolio')
   return data as { items: any[] }

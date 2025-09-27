@@ -14,7 +14,7 @@ load_dotenv()
 
 # We will use the known working model name from the successful test run.
 llm = LLM(
-    model="gemini/gemini-2.0-flash",
+    model="gemini/gemini-2.5-flash",
     api_key=os.getenv("GEMINI_API_KEY")
 )
 

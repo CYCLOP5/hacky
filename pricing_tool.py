@@ -2,6 +2,7 @@ import os
 import json
 import math
 import numpy as np
+import re
 from crewai import LLM
 from crewai.tools import BaseTool
 
@@ -21,7 +22,7 @@ class PricingTools(BaseTool):
         """
         The main execution method for the pricing tool. It uses an LLM to synthesize inputs and calculate a final premium.
         """
-        llm = LLM(model="gemini/gemini-2.0-flash", api_key=os.getenv("GEMINI_API_KEY"))
+        llm = LLM(model="gemini/gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY"))
 
         prompt = f"""
         You are a senior pricing actuary. Your final task is to calculate a 24-hour insurance premium for a new satellite policy.
@@ -44,14 +45,25 @@ class PricingTools(BaseTool):
         1.  **Extract Base Probability:** From the 'Individual Asset Risk Assessment', extract the `incident_probability`.
         2.  **Calculate Base Premium:** Use our firm's standard pricing formula to calculate a base premium. The formula is: `final_premium = (expected_loss * 1.20) + 10000.0`, where `expected_loss = probability * satellite_value`.
         3.  **Apply Strategic Surcharge (Crucial):** Analyze the `strategic_recommendation` from the CRO.
-            - If the recommendation is 'Temporarily Halt New Policies', apply a **50% surcharge** to the base premium.
-            - If the recommendation is 'Urgent Reinsurance Required', apply a **150% surcharge** to the base premium.
+            - If the recommendation is 'Temporarily Halt New Policies', apply a **400% surcharge** (5x premium) for catastrophic conditions.
+            - If the recommendation is 'Urgent Reinsurance Required', apply a **200% surcharge** (3x premium) for urgent reinsurance.
+            - If the recommendation is 'Apply High Risk Surcharge', apply a **150% surcharge** (2.5x premium) for high risk conditions.
+            - If the recommendation is 'Apply Moderate Risk Surcharge', apply a **75% surcharge** (1.75x premium) for moderate risk.
             - If the recommendation is 'Continue Writing New Policies', apply no surcharge.
-        4.  **Provide Final Quote and Reasoning:** Your final output must be a JSON object with the keys "final_premium_usd" and "reasoning". The reasoning must clearly explain the base premium calculation and detail any strategic surcharge applied based on the CRO's recommendation.
+        4.  **Business Viability Check:** CRITICAL - After calculating the premium, check if it exceeds reasonable economic thresholds:
+            - If premium > 50% of satellite value: Policy should be REJECTED as uneconomical.
+            - If premium > 15% of satellite value: Recommend partial coverage or modified terms.
+            - Always consider whether a rational customer would purchase this insurance.
+        5.  **Provide Final Quote and Reasoning:** Your final output must be ONLY the JSON object, with no other text or explanation. The JSON object must have the keys "final_premium_usd", "reasoning", and "business_recommendation". Include analysis of whether the premium is economically viable for the customer in the "reasoning" field.
         """
         try:
             response = llm.call(prompt)
-            return response
+            # Find the JSON object in the response
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if json_match:
+                return json_match.group(0)
+            else:
+                return f'{{"error": "Could not parse JSON from LLM response."}}'
         except Exception as e:
             return f'{{"error": "Error during final premium calculation: {e}"}}'
 
